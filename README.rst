@@ -24,39 +24,32 @@ It offers 2 modes
 Usage examples
 -------------
 Parse from standard input
-```
-cat logfile | logparser
-```
+
+    cat logfile | logparser
 
 Parse from single file
-```
-logparser -l [logfile]
-```
+
+    logparser -l [logfile]
 
 Parse from a list of files
-```
-logparser -l {}.log --from 20150101 --to 20150405
-```
+
+    logparser -l {}.log --from 20150101 --to 20150405
 
 Get all lines contains 'server1'
-```
-logparser -l logfile --line-filter server1
-```
+
+    logparser -l logfile --line-filter server1
 
 Get all lines contains 'server1' OR 'server2'
-```
-logparser -l logfile --line-filter server1
-```
+
+    logparser -l logfile --line-filter server1
 
 Get all lines where the third field > 9939928
-```
-logparser -l logfile --line-filter server1 --cond-filter "{2} > 9939928"
-```
+
+    logparser -l logfile --line-filter server1 --cond-filter "{2} > 9939928"
 
 Get all lines print only the second and third fields
-```
-logparser -l logfile --line-filter server1 -o "{1} {2}"
-```
+
+    logparser -l logfile --line-filter server1 -o "{1} {2}"
 
 
 .. _document: https://general-log-parser.readthedocs.org.
