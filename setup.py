@@ -61,7 +61,11 @@ setup(
     zip_safe=False,
     keywords='general-log-parser',
     cmdclass = {'test': PyTest},
-    scripts=['general_log_parser/logparser'],
+    entry_points={
+        'console_scripts': [
+            'logparser = general_log_parser.parser:main',
+        ],
+    },
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
