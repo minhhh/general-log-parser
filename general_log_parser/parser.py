@@ -75,7 +75,21 @@ def filter_regex(line_filters, lines):
         for line_filter in line_filters:
             if line_filter.search(line):
                 yield line
-                continue
+                break
+
+
+def filter_negative_regex(line_filters, lines):
+    if not line_filters:
+        for line in lines:
+            yield line
+        return
+
+    for line in lines:
+        for line_filter in line_filters:
+            if line_filter.search(line):
+                break
+        else:
+            yield line
 
 
 def filter_conditions(cond_filters, lines):
@@ -88,7 +102,7 @@ def filter_conditions(cond_filters, lines):
         for cond_filter in cond_filters:
             if eval(cond_filter.format(*line)):
                 yield line
-                continue
+                break
 
 
 def print_lines(out_format, lines):
@@ -104,7 +118,8 @@ def parse_log(args):
     to_time      = args['to']
     log_name     = args['log']
     input_dir    = args['input_dir']
-    line_filters = list(map(re.compile, args['line_filter']))
+    line_filters = list(map(lambda x: re.compile(x, re.IGNORECASE), args['line_filter']))
+    not_line_filters = list(map(lambda x: re.compile(x, re.IGNORECASE), args['not_line_filter']))
     cond_filters = args['cond_filter']
     out_format   = args['out_format'].replace('\\t', '\t') if args['out_format'] else None
     field_sep    = args['field_sep'].replace('\\t', '\t').replace('\\n', '\n').replace('\\r', '\r') if args['field_sep'] else '\t'
@@ -115,7 +130,9 @@ def parse_log(args):
     else:
         gen_input = F(gen_find, log_name, from_time, to_time, input_dir) >> gen_open >> chain_sources
 
-    func =  gen_input >>  (filter_regex, line_filters) \
+    func =  gen_input \
+            >>  (filter_regex, line_filters) \
+            >>  (filter_negative_regex, not_line_filters) \
             >> (map, lambda s: s.rstrip('\r\n')) \
             >> (map, fn.iters.partial(fn.iters.flip(unicode.split), field_sep)) \
             >> (filter_conditions, cond_filters) \
@@ -166,7 +183,8 @@ class MyCLI(click.Command):
 @click.option('-i', '--input-dir', metavar="INPUT_DIR", default=".", show_default=True, help="Name of the directory containing the logs. This should be specified correctly when --log use a time pattern.")
 @click.option('--from', metavar="FROM_TIME", help="Start time of the logs. E.g 20140405")
 @click.option('--to', metavar="TO_TIME", help="To time of the log. E.g 20140405")
-@click.option('--line-filter', metavar="LINE_FILTER", multiple=True, help='One or more line filter using regex. To be executed before COND_FILTER. \n  E.g. --line-filter="mw001" --line-filter="mw002"  \nThis is a OR condition, i.e. any line that satisfies one filter will be counted')
+@click.option('--line-filter', metavar="LINE_FILTER", multiple=True, help='One or more line filters using regex. To be executed before COND_FILTER. \n  E.g. --line-filter="mw001" --line-filter="mw002"  \nThis is a OR condition, i.e. any line that satisfies one filter will be counted')
+@click.option('--not-line-filter', metavar="NOT_LINE_FILTER", multiple=True, help='One or more negative line filters using regex. Line that contains this expression will be filtered out.')
 @click.option('--cond-filter', metavar="COND_FILTER", multiple=True, help='One or more condition filters. This will be evaluated to python code so it will be slow!!! \n  E.g. "{1} > 23:56:13".                   \nThis is a OR condition, i.e. any line that satisfy one filter will be counted    ')
 @click.option('-f', '--field-sep', metavar="FIELD_SEP", help='Field separator in the input file. If nothing is specified tab will be used')
 @click.option('-o', '--out-format', metavar="OUT_FORMAT", help='Output format. \n  E.g. "{} {} {} {}" or "{0} {1} {2}".           \nIf no ouput format is specified, the whole line is printed')

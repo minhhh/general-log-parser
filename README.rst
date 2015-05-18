@@ -7,7 +7,7 @@ General Log Parser
 
 Introduction
 ------------
-General log parser is a tool for simple parsing of log files line by line.
+General log parser is a tool for simple parsing of log files line by line. It assumes your log is in the form of a series of strings separated by tab or some kind of special field separator.
 
 It offers 2 modes:
 
@@ -47,6 +47,12 @@ Get all lines contains 'server1' OR 'server2'
 .. code-block:: bash
 
     logparser -l tests/a.20150505.log --line-filter server1 --line-filter server2
+
+Get all lines which does NOT contains 'server1'
+
+.. code-block:: bash
+
+    logparser -l tests/a.20150505.log --not-line-filter server1
 
 Get all lines where the third field > 9939928
 
