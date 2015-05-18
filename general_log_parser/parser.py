@@ -15,6 +15,11 @@ logger.setLevel(logging.ERROR)
 import fn
 from fn import F
 
+split = None
+if sys.version_info[0] == 2:
+    split = unicode.split
+else:
+    split = str.split
 
 def has_piped_input():
     return not sys.stdin.isatty()
@@ -108,9 +113,9 @@ def filter_conditions(cond_filters, lines):
 def print_lines(out_format, lines):
     for line in lines:
         if out_format:
-            print out_format.format(*line)
+            click.echo(out_format.format(*line))
         else:
-            print '\t'.join(line)
+            click.echo('\t'.join(line))
 
 
 def parse_log(args):
@@ -134,7 +139,7 @@ def parse_log(args):
             >>  (filter_regex, line_filters) \
             >>  (filter_negative_regex, not_line_filters) \
             >> (map, lambda s: s.rstrip('\r\n')) \
-            >> (map, fn.iters.partial(fn.iters.flip(unicode.split), field_sep)) \
+            >> (map, fn.iters.partial(fn.iters.flip(split), field_sep)) \
             >> (filter_conditions, cond_filters) \
             >> (print_lines, out_format)
     func()
@@ -164,6 +169,7 @@ class MyCLI(click.Command):
     def format_usage(self, ctx, formatter):
         indents = 17
         usage_text = [
+            "",
             "Usage: %s --log=LOG --input-dir=INPUT_DIR" % (__executable__),
             " " * indents + "--from=FROM_TIME --to=TO_TIME",
             " " * indents + "[--line-filter=LINE_FILTER...]",
@@ -173,19 +179,19 @@ class MyCLI(click.Command):
             " " * indents + "[-v --verbose]",
             "       %s [--version]" % (__executable__),
             "       cat input_file | %s [OPTIONS]" % (__executable__),
-            "\n"
+            ""
         ]
         formatter.write('\n'.join(usage_text))
 
 
 @click.command(cls=MyCLI, name="parser", context_settings=CONTEXT_SETTINGS, short_help="short", help="Parse a log file or piped input line by line based on specific patterns. If there's piped input then we don't have to specify --log option.")
-@click.option('-l', '--log', metavar="LOG", help="Name of the log. It could also be a pattern that has a time part in the form of YYYYMMDD, e.g  game.battle_pvp.log.{}, then the {} part will be replaced by the date specified by --from and --to.                                               \nE.g.  \nlogparser -l {}.log --from 20150401 --to 20150402          \nwill match 20150401.log and 20150402.log")
+@click.option('-l', '--log', metavar="LOG", help="Name of the log. It could also be a pattern that has a time part in the form of YYYYMMDD, e.g  game.battle_pvp.log.{}, then the {} part will be replaced by the date specified by --from and --to.                                               \nE.g.  \nlogparser -l {}.log --from 20150401 --to 20150402             \nwill match 20150401.log and 20150402.log")
 @click.option('-i', '--input-dir', metavar="INPUT_DIR", default=".", show_default=True, help="Name of the directory containing the logs. This should be specified correctly when --log use a time pattern.")
 @click.option('--from', metavar="FROM_TIME", help="Start time of the logs. E.g 20140405")
 @click.option('--to', metavar="TO_TIME", help="To time of the log. E.g 20140405")
-@click.option('--line-filter', metavar="LINE_FILTER", multiple=True, help='One or more line filters using regex. To be executed before COND_FILTER. \n  E.g. --line-filter="mw001" --line-filter="mw002"  \nThis is a OR condition, i.e. any line that satisfies one filter will be counted')
+@click.option('--line-filter', metavar="LINE_FILTER", multiple=True, help='One or more line filters using regex. To be executed before COND_FILTER. \n  E.g. --line-filter="mw001" --line-filter="mw002"  \nThis is a OR condition, i.e. any line that satisfies one filter will be counted.')
 @click.option('--not-line-filter', metavar="NOT_LINE_FILTER", multiple=True, help='One or more negative line filters using regex. Line that contains this expression will be filtered out.')
-@click.option('--cond-filter', metavar="COND_FILTER", multiple=True, help='One or more condition filters. This will be evaluated to python code so it will be slow!!! \n  E.g. "{1} > 23:56:13".                   \nThis is a OR condition, i.e. any line that satisfy one filter will be counted    ')
+@click.option('--cond-filter', metavar="COND_FILTER", multiple=True, help='One or more condition filters. This will be evaluated to python code so it will be slow!!! \n  E.g. "{1} > 23:56:13".                   \nThis is a OR condition, i.e. any line that satisfy one filter will be counted.')
 @click.option('-f', '--field-sep', metavar="FIELD_SEP", help='Field separator in the input file. If nothing is specified tab will be used')
 @click.option('-o', '--out-format', metavar="OUT_FORMAT", help='Output format. \n  E.g. "{} {} {} {}" or "{0} {1} {2}".           \nIf no ouput format is specified, the whole line is printed')
 @click.option('-v', '--verbose', is_flag=True, default=False, help="Show verbose debug information")

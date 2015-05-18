@@ -26,16 +26,15 @@ except ImportError:
 import general_log_parser
 
 with codecs.open('README.rst') as readme_file:
-    readme = readme_file.read()
+    readme = readme_file.read().decode('utf-8')
 
 with codecs.open('HISTORY.rst') as history_file:
-    history = history_file.read().replace('.. :changelog:', '')
+    history = history_file.read().decode('utf-8').replace('.. :changelog:', '')
 
 requirements = [
     "click==4.0",
     "fn==0.4.3",
-    "six==1.9.0",
-    "wsgiref==0.1.2"
+    "six==1.9.0"
 ]
 
 test_requirements = [
@@ -74,6 +73,9 @@ setup(
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
     ],
     test_suite='tests',
     tests_require=test_requirements
