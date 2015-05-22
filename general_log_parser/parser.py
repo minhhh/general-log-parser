@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from general_log_parser import __version__
 from general_log_parser import __executable__
 
+is_python_2 = sys.version_info[0] == 2
+
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig()
@@ -16,10 +18,14 @@ import fn
 from fn import F
 
 split = None
-if sys.version_info[0] == 2:
-    split = unicode.split
+strip = None
+
+if is_python_2:
+    split = fn.iters.flip(unicode.split)
+    strip = fn.iters.partial(fn.iters.flip(unicode.rstrip), '\r\n')
 else:
-    split = str.split
+    split = fn.iters.flip(str.split)
+    strip = fn.iters.partial(fn.iters.flip(str.rstrip), '\r\n')
 
 def has_piped_input():
     return not sys.stdin.isatty()
@@ -138,8 +144,8 @@ def parse_log(args):
     func =  gen_input \
             >>  (filter_regex, line_filters) \
             >>  (filter_negative_regex, not_line_filters) \
-            >> (map, lambda s: s.rstrip('\r\n')) \
-            >> (map, fn.iters.partial(fn.iters.flip(split), field_sep)) \
+            >> (map, strip) \
+            >> (map, fn.iters.partial(split, field_sep)) \
             >> (filter_conditions, cond_filters) \
             >> (print_lines, out_format)
     func()
@@ -149,7 +155,10 @@ def read_from_stdin():
     while True:
         line = sys.stdin.readline()
         if line:
-            yield line
+            if is_python_2:
+                yield unicode(line, "utf-8")
+            else:
+                yield line
         else:
             break
 
