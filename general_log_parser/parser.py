@@ -141,11 +141,12 @@ def parse_log(args):
     else:
         gen_input = F(gen_find, log_name, from_time, to_time, input_dir) >> gen_open >> chain_sources
 
+
     func =  gen_input \
             >>  (filter_regex, line_filters) \
             >>  (filter_negative_regex, not_line_filters) \
-            >> (map, strip) \
-            >> (map, fn.iters.partial(split, field_sep)) \
+            >> (fn.iters.map, strip) \
+            >> (fn.iters.map, fn.iters.partial(split, field_sep)) \
             >> (filter_conditions, cond_filters) \
             >> (print_lines, out_format)
     func()
